@@ -798,4 +798,5 @@ server.port=8080
 | `WidthType.PERCENTAGE` in tables | Breaks layout in some renderers | Use `WidthType.DXA` always |
 | Skipping `@Transactional` on service methods | DB state can be partially saved on error | Add `@Transactional` to write operations |
 | Hardcoding API keys in code | Security risk | Always use `application.properties` + environment variables |
+
 - [DESCRIPTION](Description.md)
