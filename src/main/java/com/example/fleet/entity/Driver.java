@@ -1,27 +1,33 @@
 package com.example.fleet.entity;
 
+import com.example.fleet.entity.enums.DriverStatus;
 import com.example.fleet.entity.enums.VehicleStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+
+import lombok.Builder;
 import lombok.Data;
 
 
 @Data
+@Builder
 @Entity
 public class Driver {
-
+//    id | name | licenseNumber | licenseValidUntil | shiftHours | status
+//    Hello
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String licensePlate;
-    private double capacity;
+    private String name;
+    private String licenseNumber;
 
     // The VehicleStatus is implemented here
     @Enumerated(EnumType.STRING)
-    private VehicleStatus status;
+    private DriverStatus status;
 
-    private LocalDate lastMaintenanceDate;
+    private LocalDate licenseValidUntil;
+    private double shiftHours;
 
 }
