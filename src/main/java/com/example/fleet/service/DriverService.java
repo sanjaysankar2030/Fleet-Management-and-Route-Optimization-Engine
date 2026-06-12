@@ -1,5 +1,6 @@
 package com.example.fleet.service;
 
+import com.example.fleet.entity.enums.VehicleStatus;
 import com.example.fleet.exception.ResourceNotFoundException;
 import com.example.fleet.exception.ValidationException;
 import com.example.fleet.dto.DriverRequestDTO;
@@ -7,9 +8,10 @@ import com.example.fleet.dto.DriverResponseDTO;
 import com.example.fleet.entity.Driver;
 import com.example.fleet.entity.enums.DriverStatus;
 import com.example.fleet.repository.DriverRepository;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -41,7 +43,6 @@ public class DriverService {
     }
 
     public DriverResponseDTO getDriverById(Long id) {
-
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
 
@@ -55,7 +56,8 @@ public class DriverService {
         );
 
     }
-    public List<Driver> getAllDrivers(){
+
+    public List<Driver> getAllDrivers() {
         return driverRepository.findAll();
     }
 
@@ -73,7 +75,14 @@ public class DriverService {
         driverRepository.save(driver);
     }
 
+    public boolean validateDriverLicense(@NonNull Driver driver) {
+        return LocalDate.now().isBefore(driver.getLicenseValidUntil());
+    }
 
+    public boolean isAvailable(Driver driver) {
+        return driverRepository.findByStatus(DriverStatus.AVAILABLE);
+    }
 
 }
+
 
