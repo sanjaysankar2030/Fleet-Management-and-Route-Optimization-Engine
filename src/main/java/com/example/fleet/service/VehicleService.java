@@ -1,24 +1,32 @@
 package com.example.fleet.service;
 
+import com.example.fleet.repository.VehicleRepository;
 import com.example.fleet.dto.VehicleRequestDTO;
 import com.example.fleet.dto.VehicleResponseDTO;
+import com.example.fleet.entity.Driver;
+import com.example.fleet.entity.enums.DriverStatus;
 import com.example.fleet.exception.ResourceNotFoundException;
 import com.example.fleet.exception.ValidationException;
 import com.example.fleet.entity.Vehicle;
 import com.example.fleet.entity.enums.VehicleStatus;
-import com.example.fleet.repository.VehicleRepository;
+import com.example.fleet.repository.DriverRepository;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class VehicleService {
     private final VehicleRepository vehicleRepository;
+    private final DriverRepository driverRepository;
 
-    public VehicleService(VehicleRepository vehicleRepository) {
+    public VehicleService(VehicleRepository vehicleRepository, DriverRepository driverRepository) {
         this.vehicleRepository = vehicleRepository;
+        this.driverRepository = driverRepository;
     }
 
-    public VehicleResponseDTO registerVehicle(VehicleRequestDTO request) {
+    public VehicleResponseDTO registerVehicle(@NonNull VehicleRequestDTO request) {
         Vehicle vehicle = new Vehicle();
         vehicle.setLicensePlate(request.getLicensePlate());
         vehicle.setCapacity(request.getCapacity());
@@ -52,4 +60,52 @@ public class VehicleService {
         vehicleRepository.save(vehicle);
     }
 
+    //    public void assignDriverToVehicle(Driver driver){
+//
+//
+//    }
+    public Vehicle assignDriverToVehicle(Long vehicleId, Long driverId) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+
+        // Guard checks
+        if (vehicle.getStatus() == VehicleStatus.MAINTENANCE) {
+            throw new IllegalStateException("Cannot assign a vehicle that is under maintenance");
+        }
+
+        if (driver.getStatus() != DriverStatus.AVAILABLE) {
+            throw new IllegalStateException("Driver is not available for assignment");
+        }
+
+        // Assign and update statuses
+        vehicle.setDriver(driver);
+        vehicle.setStatus(VehicleStatus.IN_USE);
+        driver.setStatus(DriverStatus.ON_SHIFT);  // or whatever your enum value is
+
+        return vehicleRepository.save(vehicle);
+    }
+
+    public void updateMaintenanceDate(Long vehicle_id, LocalDate newDate) {
+        //private LocalDate lastMaintenanceDate ;
+        if (newDate == null) {
+            throw new ValidationException("Mantaince Date is null , It Cannot be Null");
+        }
+        Vehicle vh = vehicleRepository.findById(vehicle_id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle Not Found"));
+        vh.setLastMaintenanceDate(newDate);
+        vehicleRepository.save(vh);
+
+    }
+
+    private void validateVehicleCapacity(double capacity) {
+        if (capacity <= 0) {
+            throw new ValidationException("Capacity must be greater than 0");
+        }
+        if (capacity > 50000) {  // 50 tons in kg — max for a heavy truck
+            throw new ValidationException("Capacity exceeds maximum allowed limit");
+        }
+    }
 }

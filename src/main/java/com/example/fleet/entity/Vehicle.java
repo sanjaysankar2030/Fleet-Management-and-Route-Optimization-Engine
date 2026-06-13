@@ -1,26 +1,34 @@
-package com.example.fleet.entity;
+    package com.example.fleet.entity;
 
-import com.example.fleet.entity.enums.VehicleStatus;
-import jakarta.persistence.*;
-import lombok.Data;
+    import com.example.fleet.entity.enums.VehicleStatus;
+    import jakarta.persistence.*;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+    import java.time.LocalDate;
 
-@Data
-@Entity
-public class Vehicle {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-//    private Long driverID;
-    @Column(unique = true, nullable = false)
-    private String licensePlate ;
+    @Data
+    @Entity
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class Vehicle {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+    //    private Long driverID;
+        @Column(unique = true, nullable = false)
+        private String licensePlate ;
 
-    @Enumerated(EnumType.STRING)
-    private VehicleStatus status;
+        @Enumerated(EnumType.STRING)
+        private VehicleStatus status;
 
-    private double capacity;
+        private double capacity;
 
-    private LocalDate lastMaintenanceDate ;
+        private LocalDate lastMaintenanceDate ;
 
-}
+        @ManyToOne
+        @JoinColumn(name ="driver_id")
+        private Driver driver;
+
+    }

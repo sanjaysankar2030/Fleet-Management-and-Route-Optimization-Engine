@@ -1,6 +1,5 @@
 package com.example.fleet.service;
 
-import com.example.fleet.entity.enums.VehicleStatus;
 import com.example.fleet.exception.ResourceNotFoundException;
 import com.example.fleet.exception.ValidationException;
 import com.example.fleet.dto.DriverRequestDTO;
@@ -23,7 +22,7 @@ public class DriverService {
         this.driverRepository = driverRepository;
     }
 
-    public DriverResponseDTO registerDriver(DriverRequestDTO request) {
+    public DriverResponseDTO registerDriver(@NonNull DriverRequestDTO request) {
         if (request.getLicenseNumber() == null || request.getLicenseNumber().isBlank()) {
             throw new ValidationException("License number cannot be empty");
         }

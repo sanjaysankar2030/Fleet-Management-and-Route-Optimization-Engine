@@ -1,7 +1,6 @@
 package com.example.fleet.entity;
 
 import com.example.fleet.entity.enums.DriverStatus;
-import com.example.fleet.entity.enums.VehicleStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
