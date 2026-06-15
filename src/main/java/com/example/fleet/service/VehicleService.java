@@ -1,5 +1,6 @@
 package com.example.fleet.service;
 
+import com.example.fleet.dto.DriverResponseDTO;
 import com.example.fleet.repository.VehicleRepository;
 import com.example.fleet.dto.VehicleRequestDTO;
 import com.example.fleet.dto.VehicleResponseDTO;
@@ -42,28 +43,43 @@ public class VehicleService {
         return new VehicleResponseDTO(vehicle.getId(), vehicle.getLicensePlate(), vehicle.getStatus(), vehicle.getCapacity(), vehicle.getLastMaintenanceDate());
     }
 
-    public List<Vehicle> getAllVehicles() {
-        return vehicleRepository.findAll();
+    public List<VehicleResponseDTO> getAllVehicles() {
+        return vehicleRepository.findAll().
+                stream()
+                .map(vehicles -> new VehicleResponseDTO(
+                vehicles.getId(),
+                vehicles.getLicensePlate(),
+                vehicles.getStatus(),
+                vehicles.getCapacity(),
+                vehicles.getLastMaintenanceDate()
+        ))
+                .toList();
     }
 
-    public List<Vehicle> getAllAvailableVehilce() {
-        return vehicleRepository.findByStatus(VehicleStatus.AVAILABLE);
+
+    public List<VehicleResponseDTO> getAllAvailableVehilce() {
+        return vehicleRepository.findByStatus(VehicleStatus.AVAILABLE)
+        .stream()
+                .map(vehicles -> new VehicleResponseDTO(
+                        vehicles.getId(),
+                        vehicles.getLicensePlate(),
+                        vehicles.getStatus(),
+                        vehicles.getCapacity(),
+                        vehicles.getLastMaintenanceDate()
+                ))
+                .toList();
     }
 
-    public void updateVehicleStatus(Vehicle updatedVehicle, VehicleStatus status) {
+    public void updateVehicleStatus(Long id, VehicleStatus status) {
         if (status == null) {
             throw new ValidationException("Status" + status + "is not a part of VehicleStatus enum");
         }
 
-        Vehicle vehicle = vehicleRepository.findById(updatedVehicle.getId()).orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
+        Vehicle vehicle = vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
         vehicle.setStatus(status);
         vehicleRepository.save(vehicle);
     }
 
-    //    public void assignDriverToVehicle(Driver driver){
-//
-//
-//    }
     public Vehicle assignDriverToVehicle(Long vehicleId, Long driverId) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));

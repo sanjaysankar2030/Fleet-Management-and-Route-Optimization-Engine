@@ -6,5 +6,4 @@ import com.example.fleet.entity.Driver;
 
 public interface DriverRepository extends JpaRepository<Driver,Long> {
 
-    boolean findByStatus(DriverStatus driverStatus);
 }
