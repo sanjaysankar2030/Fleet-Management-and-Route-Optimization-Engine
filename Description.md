@@ -24,7 +24,7 @@
 19. [application.properties Configuration](#19-applicationproperties-configuration)
 20. [Week 1 vs Week 2 Scope](#20-week-1-vs-week-2-scope)
 21. [Common Mistakes to Avoid](#21-common-mistakes-to-avoid)
-
+22. [Why Not a More Sophisticated Algorithm](#22-why-not-a-more-sophisticated-algorithm)
 ---
 
 ## 1. What This Project Is
@@ -799,4 +799,105 @@ server.port=8080
 | Skipping `@Transactional` on service methods | DB state can be partially saved on error | Add `@Transactional` to write operations |
 | Hardcoding API keys in code | Security risk | Always use `application.properties` + environment variables |
 
-- [DESCRIPTION](Description.md)
+# Route Optimization Engine
+
+## Overview
+
+The Dispatch and Routing Engine is the core algorithmic component of the Fleet Management API. Given a list of delivery addresses assigned to a single truck (typically 5-10 stops), the engine queries an external distance API to build a distance matrix, then sequences the stops to minimize total travel distance.
+
+This is a variant of the Traveling Salesperson Problem (TSP): find the shortest possible route that visits every stop exactly once. TSP is NP-hard, meaning an exact solution becomes computationally infeasible as the number of stops grows. The engine therefore uses a tiered approach: a fast heuristic for production use, a local-search refinement on top of it, and an exact method reserved for small instances to serve as a ground-truth benchmark.
+
+## Algorithms Implemented
+
+### 1. Nearest Neighbor (Greedy)
+
+The baseline heuristic. Starting from the depot or first stop, the algorithm repeatedly travels to the closest unvisited stop until all stops are visited.
+
+```
+function nearestNeighbor(distanceMatrix, start):
+    route = [start]
+    unvisited = allStops - {start}
+    current = start
+    while unvisited is not empty:
+        next = closest stop to current in unvisited
+        route.append(next)
+        unvisited.remove(next)
+        current = next
+    return route
+```
+
+**Complexity:** O(n²) for n stops.
+**Role in this project:** Default routing strategy. Fast and simple, but can produce routes 20-30% longer than optimal, particularly when an early greedy choice strands a distant stop for later.
+
+### 2. 2-opt Local Search
+
+A refinement applied on top of the nearest-neighbor route. The algorithm repeatedly looks for two edges in the route that, if reversed, would shorten the total distance, and applies the swap. It continues until no further improving swap exists (a local optimum).
+
+```
+function twoOpt(route, distanceMatrix):
+    improved = true
+    while improved:
+        improved = false
+        for i in 1..len(route)-2:
+            for j in i+1..len(route)-1:
+                newRoute = route[0:i] + reverse(route[i:j+1]) + route[j+1:]
+                if length(newRoute) < length(route):
+                    route = newRoute
+                    improved = true
+    return route
+```
+
+**Complexity:** O(n²) per pass, run until convergence.
+**Role in this project:** Post-processing step run on the nearest-neighbor output before returning the manifest to the driver. Typically closes most of the gap to optimal at negligible extra cost for n ≤ 10.
+
+### 3. Or-opt (Stretch Goal)
+
+A complement to 2-opt that relocates a single stop, or a short chain of two or three consecutive stops, to a different position in the route if doing so shortens the total distance. It catches improving moves that edge-reversal in 2-opt cannot find.
+
+**Complexity:** O(n²) per pass.
+**Role in this project:** Optional refinement layered after 2-opt converges. Worth implementing if benchmarking shows 2-opt alone still leaves a meaningful gap to optimal.
+
+### 4. Held-Karp (Exact, Benchmark Only)
+
+A dynamic programming solution to TSP that guarantees the optimal route. It is used exclusively offline, as a ground-truth baseline for benchmarking the heuristics above, not in the live API path.
+
+**Complexity:** O(n² · 2ⁿ) time and O(n · 2ⁿ) space, which makes it impractical beyond roughly 15-18 stops.
+**Role in this project:** Computes the true optimal route for small synthetic test cases (5-12 stops) so that the quality of the greedy and 2-opt routes can be measured as a percentage above optimal, rather than just compared against each other.
+
+## Algorithm Comparison
+
+| Algorithm | Solution Quality | Time Complexity | Used Where |
+|---|---|---|---|
+| Nearest Neighbor | Baseline (often 15-30% above optimal) | O(n²) | Live API, initial route |
+| 2-opt | Typically within 5-10% of optimal | O(n²) per pass | Live API, post-processing |
+| Or-opt | Marginal improvement over 2-opt alone | O(n²) per pass | Optional refinement |
+| Held-Karp | Optimal (0% gap by definition) | O(n² · 2ⁿ) | Offline benchmarking only |
+
+## Benchmarking Methodology
+
+To quantify the heuristics, generate synthetic delivery sets at increasing stop counts (e.g., 5, 8, 10, 12, 15, 20 stops) using randomized coordinates within a realistic service area. For each set, record:
+
+- Total route distance for nearest neighbor, nearest neighbor + 2-opt, and (for n ≤ 15) Held-Karp.
+- Computation time for each method.
+- Percentage gap of each heuristic above the Held-Karp optimal, where available.
+
+| Stops | NN Distance | NN+2-opt Distance | Optimal (Held-Karp) | NN Gap | 2-opt Gap | NN Time | 2-opt Time | Held-Karp Time |
+|---|---|---|---|---|---|---|---|---|
+| 5 | | | | | | | | |
+| 8 | | | | | | | | |
+| 10 | | | | | | | | |
+| 12 | | | | | | | | |
+| 15 | | | | | | | | |
+| 20 | | | n/a (infeasible) | | | | n/a |
+
+Fill this table in once the benchmark suite has run. The expected story: nearest neighbor is fast but leaves quality on the table, 2-opt closes most of that gap for a small constant-factor time cost, and Held-Karp confirms how close to optimal the practical heuristics actually land for realistic delivery sizes.
+
+## Why Not a More Sophisticated Algorithm
+
+Christofides' algorithm offers a provable 1.5x approximation guarantee but requires building a minimum spanning tree and a minimum-weight perfect matching, which is a meaningfully larger implementation than 2-opt for a problem size (5-10 stops) where 2-opt already gets close to optimal. Simulated annealing is a good fit for larger instances (30+ stops) where local search can get stuck in local optima, but at this project's scale the added complexity isn't justified by the expected quality gain. Both are reasonable directions for future work if route sizes grow.
+
+## Future Improvements
+
+- Extend Or-opt with longer relocation chains if benchmarking shows a meaningful gap remains after 2-opt.
+- Revisit simulated annealing if typical manifests grow beyond ~20 stops per truck.
+- Incorporate delivery time windows directly into the cost function rather than treating routing and scheduling as separate concerns.
