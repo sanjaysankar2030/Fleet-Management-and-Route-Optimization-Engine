@@ -15,7 +15,7 @@ import java.util.List;
 @RequestMapping("/vehicle")
 public class VehicleController {
 	@Autowired
-	public VehicleService vehicleService;
+	private VehicleService vehicleService;
 
 	@GetMapping("/")
 	public ResponseEntity<List<VehicleResponseDTO>> getAllVehicles(){
@@ -23,7 +23,10 @@ public class VehicleController {
 		return ResponseEntity.ok(vehicles);
 	}
 
-	@PutMapping("/register")
+	//TODO : LastMaintainence date is serialized and stored as a 'date' object in mysql
+	// But the deserialization of the date value gives null hence it cannot be sent for
+	// the frontend to view through ResponseEntity<T>
+	@PostMapping("/register")
 	public ResponseEntity<VehicleResponseDTO> registerVehicle(@RequestBody VehicleRequestDTO request){
 		var response = vehicleService.registerVehicle(request);
 		return ResponseEntity.ok().body(response);
@@ -46,12 +49,27 @@ public class VehicleController {
 	}
 
 	@PatchMapping ("/{id}/maintenance")
-	public ResponseEntity<VehicleResponseDTO> updateMaintenanceDate(){}
+	public ResponseEntity<VehicleResponseDTO> updateMaintenanceDate(
 			@PathVariable Long id,
 			@RequestBody LocalDate date
 	){
 		vehicleService.updateMaintenanceDate(id , date);
 		return ResponseEntity.noContent().build();
 	}
-//	TODO: Assign Driver to Vehicle One to One relationship
+	@GetMapping("avalilable")
+	public ResponseEntity<List<VehicleResponseDTO>> getAvailableVehicle(){
+		var available_vehicles = vehicleService.getAllAvailableVehilce();
+		return ResponseEntity.ok(available_vehicles);
+	}
+	//	TODO: Assign Driver to Vehicle One to One relationship
+	@GetMapping("/{vehicleId}/assign/{driverId}")
+	public ResponseEntity<VehicleResponseDTO> assignDrivertoVehicle(
+			@PathVariable Long vehicleId,
+			@PathVariable Long driverId
+	){
+		var vehicle = vehicleService.assignDriverToVehicle(vehicleId,driverId);
+		var vehicleDto = new VehicleResponseDTO(vehicle);
+		return ResponseEntity.ok(vehicleDto);
+	}
+
 }

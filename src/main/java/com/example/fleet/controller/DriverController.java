@@ -6,7 +6,6 @@ import java.util.Map;
 import com.example.fleet.dto.DriverRequestDTO;
 import com.example.fleet.dto.DriverResponseDTO;
 import com.example.fleet.service.DriverService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/driver")
 public class DriverController {
 	@Autowired
-	public DriverService driverService;
+	private DriverService driverService;
 
 	@PostMapping("/register")
 	public ResponseEntity<DriverResponseDTO> registerDriver(@RequestBody DriverRequestDTO request) {

@@ -1,7 +1,7 @@
 package com.example.fleet.dto;
 
+import com.example.fleet.entity.Vehicle;
 import com.example.fleet.entity.enums.VehicleStatus;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +16,5 @@ public class VehicleRequestDTO {
     private String licensePlate ;
     private double capacity;
     private LocalDate lastMaintenanceDate ;
+
 }

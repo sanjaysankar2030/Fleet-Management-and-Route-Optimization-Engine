@@ -87,7 +87,6 @@ public class VehicleService {
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
-        // Guard checks
         if (vehicle.getStatus() == VehicleStatus.MAINTENANCE) {
             throw new IllegalStateException("Cannot assign a vehicle that is under maintenance");
         }
@@ -124,4 +123,5 @@ public class VehicleService {
             throw new ValidationException("Capacity exceeds maximum allowed limit");
         }
     }
+
 }

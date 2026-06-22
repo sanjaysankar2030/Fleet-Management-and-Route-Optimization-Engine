@@ -1,5 +1,6 @@
 package com.example.fleet.dto;
 
+import com.example.fleet.entity.Vehicle;
 import com.example.fleet.entity.enums.VehicleStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,5 +24,17 @@ public class VehicleResponseDTO {
     private LocalDate lastMaintenanceDate ;
 
     public VehicleResponseDTO(Long id, String licensePlate, double capacity, VehicleStatus status) {
+        this.id = id;
+        this.licensePlate = licensePlate;
+        this.capacity = capacity;
+        this.status = status;
+    }
+
+    public VehicleResponseDTO(Vehicle vehicle) {
+        this.id = vehicle.getId();
+        this.licensePlate = vehicle.getLicensePlate();
+        this.capacity = vehicle.getCapacity();
+        this.status = vehicle.getStatus();
+        this.lastMaintenanceDate = vehicle.getLastMaintenanceDate();
     }
 }
