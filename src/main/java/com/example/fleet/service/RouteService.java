@@ -78,7 +78,7 @@ public class RouteService {
 						)).toList();
 	}
 
-	public List<RouteResponseEntity> getTasksByDriver(Long driverId) {
+	public List<RouteResponseEntity> getRouteByDriver(Long driverId) {
 		List<Route> driverList = new ArrayList<>();
 		List<Route> base = repository.findAll();
 		for (Route deliverytask : base) {
