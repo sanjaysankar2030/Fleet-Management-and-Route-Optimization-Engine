@@ -57,10 +57,14 @@ public class DeliveryController {
 	}
 
 	@PutMapping("/vehicle/{vehicleId}")
-	public ResponseEntity<DeliveryTaskResponseDTO> getTaskByVehicle(){
-		var responseDto = service.getTasksByVehicle();
+	public ResponseEntity<List<DeliveryTaskResponseDTO>> getTaskByVehicle(@PathVariable Long vehicleId){
+		var responseDto = service.getTasksByVehicle(vehicleId);
 		return ResponseEntity.ok(responseDto);
 	}
 
-
+	@PutMapping("/driver/{driverId}")
+	public ResponseEntity<List<DeliveryTaskResponseDTO>> getTaskByDriver(@PathVariable Long driverId){
+		var responseDto = service.getTasksByVehicle(driverId);
+		return ResponseEntity.ok(responseDto);
+	}
 }

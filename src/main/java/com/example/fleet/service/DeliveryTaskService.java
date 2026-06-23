@@ -136,11 +136,11 @@ public class DeliveryTaskService {
 		);
 	}
 
-	public List<DeliveryTaskResponseDTO> getTasksByVehicle(Vehicle vehicle) {
+	public List<DeliveryTaskResponseDTO> getTasksByVehicle(Long vehicleId) {
 		List<DeliveryTask> vehilceTasks = new ArrayList<>();
 		List<DeliveryTask> base = deliveryTaskRepository.findAll();
 		for (DeliveryTask deliverytask : base) {
-			if (deliverytask.getVehicle().getId().equals(vehicle.getId())) {
+			if (deliverytask.getVehicle().getId().equals(vehicleId)) {
 				vehilceTasks.add(deliverytask);
 			}
 		}
@@ -157,11 +157,11 @@ public class DeliveryTaskService {
 						)).toList();
 	}
 
-	public List<DeliveryTaskResponseDTO> getTasksByDriver(Driver driver) {
+	public List<DeliveryTaskResponseDTO> getTasksByDriver(Long driverId) {
 		List<DeliveryTask> deliveryList = new ArrayList<>();
 		List<DeliveryTask> base = deliveryTaskRepository.findAll();
 		for (DeliveryTask deliverytask : base) {
-			if (deliverytask.getDriver().getId().equals(driver.getId())) {
+			if (deliverytask.getDriver().getId().equals(driverId)) {
 				deliveryList.add(deliverytask);
 			}
 		}
@@ -191,7 +191,5 @@ public class DeliveryTaskService {
 				deliveryTask.getVehicle(),
 				deliveryTask.getDriver()
 		);
-
-
 	}
 }
