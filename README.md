@@ -2,137 +2,79 @@
 
 ---
 - [DESCRIPTION](Description.md)
-## Services
-
-### DriverService
-- `registerDriver`
-- `getDriverById`
-- `getAllDrivers`
-- `updateDriverShiftHours`
-- `validateDriverLicense`
-- `isDriverAvailable`
+# Routing & Dispatch Engine — Method Reference
 
 ---
 
-### VehicleService
-- `registerVehicle`
-- `getVehicleById`
-- `getAllVehicles`
-- `getAvailableVehicles`
-- `assignDriverToVehicle`
-- `updateVehicleStatus`
-- `updateMaintenanceDate`
-- `validateVehicleCapacity`
+
+## DistanceMatrixService *(External API)*
+
+| Method | Responsibility |
+|--------|----------------|
+| `getDistanceMatrix(waypoints)` | Public entry — tries external API, falls back to Haversine on failure |
+| `calculateDistanceBetweenPoints(lat1, lng1, lat2, lng2)` | Haversine formula — pure math, no network call |
+| `buildApiRequestPayload(waypoints)` | Formats coordinates into the request shape required by Google/OSRM |
+| `parseApiResponse(responseBody)` | Extracts the distance matrix (2D array) from the raw API response |
+| `handleApiFailure(exception, waypoints)` | Catches API/network errors, logs, and triggers the Haversine fallback path |
+
+**Notes for implementation:**
+- `getDistanceMatrix` is the only method `RoutingService` should call directly — it should never know whether the data came from Google, OSRM, or Haversine.
+- Watch coordinate order: OSRM wants `longitude,latitude`; Google wants `latitude,longitude`. Document this clearly in `buildApiRequestPayload`.
+- `handleApiFailure` should not throw — it should return a Haversine-built matrix so dispatch never hard-fails just because the external API is down.
 
 ---
 
-### DeliveryTaskService
-- `createDeliveryTask`
-- `getDeliveryTaskById`
-- `getAllDeliveryTasks`
-- `assignTaskToVehicle`
-- `assignTaskToDriver`
-- `updateDeliveryStatus`
-- `getTasksByVehicle`
-- `getTasksByDriver`
-- `validateCoordinates`
+## RoutingService *(TSP Optimization)*
+
+| Method | Responsibility |
+|--------|----------------|
+| `optimizeRoute(waypoints, distanceMatrix)` | Entry point — orchestrates matrix build → greedy TSP → returns sequenced stops |
+| `applyGreedyTSP(distanceMatrix, startIndex)` | Nearest-neighbor heuristic: from current stop, repeatedly pick closest unvisited stop |
+| `calculateTotalDistance(sequence, distanceMatrix)` | Sums edge weights along a given stop order |
+| `buildWaypointMatrix(deliveryTasks)` | Converts a list of `DeliveryTaskEntity` into an ordered list of (lat, lng) pairs, depot first |
+| `sequenceWaypoints(route, originalTasks)` | Maps the optimized index order back to actual `DeliveryTaskEntity` objects for the response |
+
+**Notes for implementation:**
+- `applyGreedyTSP` always needs an explicit starting index — usually the depot (index 0). Don't let the algorithm pick its own start.
+- `calculateTotalDistance` should be reused both inside the optimizer (to validate improvement, if you add 2-opt later) and to populate `OptimizedRouteResponseDTO.totalDistance`.
+- Keep `buildWaypointMatrix` and `sequenceWaypoints` symmetric — same index ordering in both directions, or your final manifest will silently point to the wrong addresses.
+
+---
+## DispatchService *(Orchestrator)*
+
+| Method | Responsibility |
+|--------|----------------|
+| `dispatchRoute(dispatchRequestDTO)` | Full pipeline: validate → assign → fetch waypoints → optimize → build response |
+| `validateDispatchRequest(dto)` | Checks vehicle/driver exist, are available, and task count is within bounds (5–10) |
+| `assignVehicleAndDriver(vehicleId, driverId, taskIds)` | Links tasks to the chosen vehicle/driver before optimization |
+| `fetchDeliveryWaypoints(taskIds)` | Pulls `DeliveryTaskEntity` records and converts to coordinate list |
+| `buildOptimizedRouteResponse(sequence, totalDistance)` | Assembles the final `OptimizedRouteResponseDTO` for the controller |
+
+**Notes for implementation:**
+- `validateDispatchRequest` is step 1, always — never let an invalid vehicle/driver reach the routing logic mid-flow.
+- `dispatchRoute` should be `@Transactional` since it writes route/task assignments before returning.
+- Order inside `dispatchRoute`: validate → assign → fetch waypoints → `RoutingService.optimizeRoute` → build response. Keep `DispatchService` as pure orchestration — no distance math or TSP logic should live here.
 
 ---
 
-### RouteService
-- `createRoute`
-- `getRouteById`
-- `getAllRoutes`
-- `getRoutesByVehicle`
-- `getRoutesByDriver`
-- `updateRouteStatus`
-- `getActiveRoutes`
+## DispatchController — `/api/dispatch`
+
+| Method | Endpoint | Handler | Calls |
+|--------|----------|---------|-------|
+| POST | `/optimize` | `dispatchRoute` | `DispatchService.dispatchRoute` |
+| GET | `/status/{routeId}` | `getDispatchStatus` | `RouteService.getRouteById` |
+| POST | `/validate` | `validateDispatchRequest` | `DispatchService.validateDispatchRequest` |
 
 ---
 
-### RoutingService *(TSP Optimization)*
-- `optimizeRoute`
-- `applyGreedyTSP`
-- `calculateTotalDistance`
-- `buildWaypointMatrix`
-- `sequenceWaypoints`
+## Suggested Build Order
 
----
+1. `DistanceMatrixService.calculateDistanceBetweenPoints` (Haversine) — no dependencies, easiest to unit test
+2. `DistanceMatrixService.getDistanceMatrix` (Haversine-only first, wire in API later)
+3. `RoutingService.applyGreedyTSP` + `calculateTotalDistance` — test against a hardcoded matrix
+4. `RoutingService.buildWaypointMatrix` / `sequenceWaypoints` — connects entities to the algorithm
+5. `RoutingService.optimizeRoute` — ties 1–4 together
+6. `DispatchService` methods, in the table order above
+7. Wire in the real external API (`buildApiRequestPayload`, `parseApiResponse`, `handleApiFailure`) last, once the Haversine path works end-to-end
 
-### DistanceMatrixService *(External API)*
-- `getDistanceMatrix`
-- `calculateDistanceBetweenPoints`
-- `buildApiRequestPayload`
-- `parseApiResponse`
-- `handleApiFailure`
-
----
-
-### DispatchService *(Orchestrator)*
-- `dispatchRoute`
-- `validateDispatchRequest`
-- `assignVehicleAndDriver`
-- `fetchDeliveryWaypoints`
-- `buildOptimizedRouteResponse`
-
----
-
-## Controllers
-
-### DriverController — `/api/drivers`
-| Method | Endpoint | Handler |
-|--------|----------|---------|
-| POST | `/` | `registerDriver` |
-| GET | `/` | `getAllDrivers` |
-| GET | `/{id}` | `getDriverById` |
-| PUT | `/{id}/shift-hours` | `updateDriverShiftHours` |
-| GET | `/{id}/availability` | `isDriverAvailable` |
-
----
-
-### VehicleController — `/api/vehicles`
-| Method | Endpoint | Handler |
-|--------|----------|---------|
-| POST | `/` | `registerVehicle` |
-| GET | `/` | `getAllVehicles` |
-| GET | `/{id}` | `getVehicleById` |
-| GET | `/available` | `getAvailableVehicles` |
-| PUT | `/{id}/status` | `updateVehicleStatus` |
-| PUT | `/{id}/assign-driver` | `assignDriverToVehicle` |
-| PUT | `/{id}/maintenance` | `updateMaintenanceDate` |
-
----
-
-### DeliveryTaskController — `/api/deliveries`
-| Method | Endpoint | Handler |
-|--------|----------|---------|
-| POST | `/` | `createDeliveryTask` |
-| GET | `/` | `getAllDeliveryTasks` |
-| GET | `/{id}` | `getDeliveryTaskById` |
-| PUT | `/{id}/assign-vehicle` | `assignTaskToVehicle` |
-| PUT | `/{id}/assign-driver` | `assignTaskToDriver` |
-| PUT | `/{id}/status` | `updateDeliveryStatus` |
-| GET | `/vehicle/{vehicleId}` | `getTasksByVehicle` |
-| GET | `/driver/{driverId}` | `getTasksByDriver` |
-
----
-
-### RouteController — `/api/routes`
-| Method | Endpoint | Handler |
-|--------|----------|---------|
-| POST | `/` | `createRoute` |
-| GET | `/` | `getAllRoutes` |
-| GET | `/{id}` | `getRouteById` |
-| GET | `/vehicle/{vehicleId}` | `getRoutesByVehicle` |
-| GET | `/driver/{driverId}` | `getRoutesByDriver` |
-| PUT | `/{id}/status` | `updateRouteStatus` |
-| GET | `/active` | `getActiveRoutes` |
-
----
-
-### DispatchController — `/api/dispatch`
-| Method | Endpoint | Handler |
-|--------|----------|---------|
-| POST | `/optimize` | `dispatchRoute` |
-| GET | `/status/{routeId}` | `getDispatchStatus` |
-| POST | `/validate` | `validateDispatchRequest` |
+This order lets you validate the math and TSP logic in isolation before touching network calls or persistence.

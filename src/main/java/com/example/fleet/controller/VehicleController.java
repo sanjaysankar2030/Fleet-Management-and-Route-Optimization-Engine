@@ -23,9 +23,6 @@ public class VehicleController {
 		return ResponseEntity.ok(vehicles);
 	}
 
-	//TODO : LastMaintainence date is serialized and stored as a 'date' object in mysql
-	// But the deserialization of the date value gives null hence it cannot be sent for
-	// the frontend to view through ResponseEntity<T>
 	@PostMapping("/register")
 	public ResponseEntity<VehicleResponseDTO> registerVehicle(@RequestBody VehicleRequestDTO request){
 		var response = vehicleService.registerVehicle(request);
@@ -42,7 +39,6 @@ public class VehicleController {
 	public ResponseEntity<VehicleResponseDTO> updateVehicleStatus(
 			@PathVariable Long id,
 			@RequestBody VehicleStatus status
-			// TODO : Keeping the enum in the body there may be good ways to do it too
 	){
 		vehicleService.updateVehicleStatus(id , status);
 		return ResponseEntity.noContent().build();
@@ -61,7 +57,6 @@ public class VehicleController {
 		var available_vehicles = vehicleService.getAllAvailableVehilce();
 		return ResponseEntity.ok(available_vehicles);
 	}
-	//	TODO: Assign Driver to Vehicle One to One relationship
 	@GetMapping("/{vehicleId}/assign/{driverId}")
 	public ResponseEntity<VehicleResponseDTO> assignDrivertoVehicle(
 			@PathVariable Long vehicleId,

@@ -91,7 +91,9 @@ public class DeliveryTaskService {
 
 		deliveryTask.setVehicle(vehicle);
 		deliveryTask.setStatus(DeliveryStatus.ASSIGNED);
+		vehicle.setCapacity(vehicle.getCapacity()+1);
 		vehicle.setStatus(VehicleStatus.IN_USE);
+		vehicleRepository.save(vehicle);
 		deliveryTaskRepository.save(deliveryTask);
 		DeliveryTask deliverytask = deliveryTaskRepository.findById(taskId).orElseThrow(() -> new ResourceNotFoundException("DeliveryTask Not Found "));
 		return  new DeliveryTaskResponseDTO(
@@ -105,14 +107,12 @@ public class DeliveryTaskService {
 		);
 	}
 
-	// TODO: we have DeliveryTaskStatus.ASSIGNED if the driver is not assinged and vehilce is assigned the status gets updated and might
-// introduce bad behaviour
 	public DeliveryTaskResponseDTO assignTaskToDriver(Long driverId, Long taskId) {
 		Driver driver = driverRepository.findById(driverId)
 				.orElseThrow(() -> new RuntimeException("Driver not found"));
 		DeliveryTask deliveryTask = deliveryTaskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("Task not found"));
 
-		if (driver.getStatus() == DriverStatus.ON_SHIFT) {
+		if (driver.getStatus() == DriverStatus.OFF_SHIFT) {
 			throw new IllegalStateException("Cannot assign a driver that is under maintenance");
 		}
 		if (deliveryTask.getStatus() == DeliveryStatus.ASSIGNED) {
@@ -121,8 +121,9 @@ public class DeliveryTaskService {
 
 		deliveryTask.setDriver(driver);
 		deliveryTask.setStatus(DeliveryStatus.ASSIGNED);
-		// TODO : ONSHIFT Means he is not available but why do we need a .OFFSHIFT??
-		driver.setStatus(DriverStatus.ON_SHIFT);
+		if (driver.getStatus() == DriverStatus.AVAILABLE) {
+			driver.setStatus(DriverStatus.ON_SHIFT);
+		}
 		deliveryTaskRepository.save(deliveryTask);
 		DeliveryTask deliveryTask1 = deliveryTaskRepository.findById(taskId).orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
 		return new DeliveryTaskResponseDTO(
