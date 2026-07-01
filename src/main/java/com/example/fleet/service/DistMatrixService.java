@@ -1,6 +1,9 @@
 package com.example.fleet.service;
 
+import com.example.fleet.entity.WayPoint;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class DistMatrixService {
@@ -30,4 +33,16 @@ public class DistMatrixService {
 	//calculateTotalDistance adds up the matrix values along that sequence → gives you the total km for that route.
 	//sequenceWaypoints maps the index order back to the real DeliveryTaskEntity objects.
 	// Sequence + total distance get packed into OptimizedRouteResponseDTO (and saved to RouteEntity if persisted).	// and also why are there list of waypoints ?
+	public double[][] getDistanceMatrix(List<WayPoint> waypoints) {
+		int n = waypoints.size();
+		double[][] matrix = new double[][];
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+
+
+			}
+		}
+	}
+
 }
+
