@@ -3,11 +3,22 @@ package com.example.fleet.service;
 import com.example.fleet.entity.WayPoint;
 import org.springframework.stereotype.Service;
 
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
 
 @Service
 public class DistMatrixService {
+
+    @AutoWired
 	public DeliveryTaskService deliveryTaskService;
+
+    @AutoWired
+    public RestTemplate restTemplate;
+
+    @Value("${distance.api.google-api-key}")
+    private String googleApiKey;
 
 	/*
 	 * Forumla for converting radian / vector to degree ( pi to -pi)
@@ -34,15 +45,20 @@ public class DistMatrixService {
 	//sequenceWaypoints maps the index order back to the real DeliveryTaskEntity objects.
 	// Sequence + total distance get packed into OptimizedRouteResponseDTO (and saved to RouteEntity if persisted).	// and also why are there list of waypoints ?
 	public double[][] getDistanceMatrix(List<WayPoint> waypoints) {
-		int n = waypoints.size();
-		double[][] matrix = new double[][];
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-
-
-			}
-		}
+        try{
+            return callDistanceApi(waypoints);
+        }
+        catch(Exception e){
+            return handleApiException(waypoints);
+        }
 	}
+
+    public double [][] callDistanceApi(List<WayPoint> waypoint){
+        String payload = buildApiPayload(waypoint);
+        String url = googleBaseUrl + "?origins={origins}&destinations={destinations}&key={key}";
+        ResponseBody<String> response = restTemplate.getForEntity();
+
+    }
 
 }
 
