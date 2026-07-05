@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WayPoint {
+	private Long id;
 	private double lat;
 	private double lon;
 }
