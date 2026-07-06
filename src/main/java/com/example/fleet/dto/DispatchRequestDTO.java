@@ -1,4 +1,5 @@
 package com.example.fleet.dto;
+
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class DispatchRequestDTO {
 	private Long id;
 	private Long driverId;
+	private Long vehicleId;
 	private List<Long> deliveryListIds;
 
 }

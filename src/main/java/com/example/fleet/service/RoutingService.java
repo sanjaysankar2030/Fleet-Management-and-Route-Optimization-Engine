@@ -11,7 +11,7 @@ public class RoutingService {
 	@Autowired
 	private DistMatrixService distMatrixService;
 
-	public List<DeliveryTask> optimizeRoutes(List<DeliveryTask> deliveryTasks) {
+	public List<DeliveryTask> optimizeRoute(List<DeliveryTask> deliveryTasks) {
 		List<WayPoint> wayPoints = buildWaypointMatrix(deliveryTasks);
 		double[][] matrix = distMatrixService.getDistanceMatrix(wayPoints);
 		List<Integer> bestRoute = applyTSP(wayPoints);
@@ -26,12 +26,33 @@ public class RoutingService {
 		return wayPointList;
 	}
 
-	public List<Integer> applyTSP(List<WayPoint> wayPointList) {
-		List<Integer> bestRouteList = new ArrayList<>();
-		return bestRouteList;
-//		TODO: Learn the greedy tsp with golang and then try to implement it here
-	}
+	public List<Integer> applyGreedyTSP(double[][] distanceMatrix) {
+		int n = distanceMatrix.length;
+		boolean[] visited = new boolean[n];
+		List<Integer> route = new ArrayList<>();
 
+		int current = 0; // start at index 0 (depot or first stop)
+		visited[current] = true;
+		route.add(current);
+
+		for (int step = 1; step < n; step++) {
+			int nearest = -1;
+			double minDist = Double.MAX_VALUE;
+
+			for (int j = 0; j < n; j++) {
+				if (!visited[j] && distanceMatrix[current][j] < minDist) {
+					minDist = distanceMatrix[current][j];
+					nearest = j;
+				}
+			}
+
+			visited[nearest] = true;
+			route.add(nearest);
+			current = nearest;
+		}
+
+		return route;
+	}
 	public List<DeliveryTask> sequencePoints(List<Integer> bestRoute, List<DeliveryTask> deliveryTasks) {
 		List<DeliveryTask> ordered = new ArrayList<>();
 		for (int index : bestRoute) {
