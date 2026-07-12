@@ -5,7 +5,6 @@ import com.example.fleet.dto.DeliveryTaskResponseDTO;
 import com.example.fleet.entity.Driver;
 import com.example.fleet.entity.Vehicle;
 import com.example.fleet.entity.enums.DeliveryStatus;
-import com.example.fleet.entity.enums.VehicleStatus;
 import com.example.fleet.service.DeliveryTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
