@@ -14,7 +14,7 @@ public class RoutingService {
 	public List<DeliveryTask> optimizeRoute(List<DeliveryTask> deliveryTasks) {
 		List<WayPoint> wayPoints = buildWaypointMatrix(deliveryTasks);
 		double[][] matrix = distMatrixService.getDistanceMatrix(wayPoints);
-		List<Integer> bestRoute = applyTSP(wayPoints);
+		List<Integer> bestRoute = applyGreedyTSP(matrix);
 		return sequencePoints(bestRoute, deliveryTasks);
 	}
 

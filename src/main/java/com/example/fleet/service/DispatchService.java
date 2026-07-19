@@ -1,9 +1,6 @@
 package com.example.fleet.service;
 
-import com.example.fleet.dto.DispatchRequestDTO;
-import com.example.fleet.dto.OptimizedRouteResponseDTO;
-import com.example.fleet.dto.RouteRequestEntity;
-import com.example.fleet.dto.RouteResponseEntity;
+import com.example.fleet.dto.*;
 import com.example.fleet.entity.*;
 import com.example.fleet.entity.enums.DriverStatus;
 import com.example.fleet.entity.enums.RouteStatus;
@@ -23,6 +20,11 @@ import java.util.List;
 
 @Service
 public class DispatchService {
+	@Autowired
+	private DriverService driverService;
+
+	@Autowired
+	private VehicleService vehicleService;
 
 	@Autowired
 	private DeliveryTaskRepository deliveryTaskRepository;
@@ -45,6 +47,7 @@ public class DispatchService {
 	// -------------------------------------------------------
 	// MAIN METHOD — full pipeline, called by controller
 	// -------------------------------------------------------
+
 	@Transactional
 	public OptimizedRouteResponseDTO dispatchRoute(DispatchRequestDTO request) {
 
