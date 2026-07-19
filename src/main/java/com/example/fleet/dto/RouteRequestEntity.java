@@ -17,6 +17,6 @@ public class RouteRequestEntity {
 	private Long id;
 	private LocalDate date;
 	private RouteStatus status;
-	private Long vehicleId;
-	private Long driverId;
+	private Vehicle vehicle;
+	private Driver driver;
 }

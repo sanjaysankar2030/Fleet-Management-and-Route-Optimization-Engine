@@ -8,18 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 public class DistMatrixService {
 	@Autowired
 	private static final Logger log = LoggerFactory.getLogger(DistMatrixService.class);
 
-	@Autowired
-	public DeliveryTaskService deliveryTaskService;
-
-	@Autowired
-	public RestTemplate restTemplate;
 
 //    @Value("${distance.api.google-api-key}")
 //    private String googleApiKey;
@@ -28,7 +22,7 @@ public class DistMatrixService {
 //	private String googleBaseUrl;
 
 	/*
-	 * Forumla for converting radian / vector to degree ( pi to -pi)
+	 * Formula for converting radian / vector to degree ( pi to -pi)
 	 * 𝑎=sin2Δlat2+cos(lat1)⋅cos(lat2)⋅sin2Δlong2
 	 * atan2 used to find the degree between two points in a 2d plot
 	 * c = 2 * atan2(sqrt(a), sqrt(1 - a))
@@ -73,18 +67,18 @@ public class DistMatrixService {
 		try {
 			return callDistanceApi(waypoints);
 		} catch (Exception e) {
-			return handleApiException(e, waypoints);
+			return handleApiException(waypoints);
 		}
 	}
 
-	public Exception callDistanceApi(List<WayPoint> waypoints) {
-		return new Exception("API NOT IMPMLEMENTED STILL FALLING BACK TO HAVERSINE");
+	public double[][] callDistanceApi(List<WayPoint> waypoints) throws Exception {
+		throw new Exception("API NOT IMPLEMENTED STILL FALLING BACK TO HAVERSINE");
 	}
 
-	public double[][] handleApiException(Exception e, List<WayPoint> wayPoints) {
-		log.warning("--------------------------------------------------------------");
-		log.warning("External distance API failed. Falling back to Haversine. Reason");
-		log.warning("--------------------------------------------------------------");
+	public double[][] handleApiException( List<WayPoint> wayPoints) {
+		log.info("--------------------------------------------------------------");
+		log.info("External distance API failed. Falling back to Haversine. Reason");
+		log.info("--------------------------------------------------------------");
 		return buildHaversineMatrix(wayPoints);
 	}
 }
