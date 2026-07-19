@@ -14,7 +14,5 @@ public class DispatchRequestDTO {
 	private Long driverId;
 	private Long vehicleId;
 	private List<Long> deliveryListIds;
-
 }
-
 

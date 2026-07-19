@@ -21,12 +21,6 @@ import java.util.List;
 @Service
 public class DispatchService {
 	@Autowired
-	private DriverService driverService;
-
-	@Autowired
-	private VehicleService vehicleService;
-
-	@Autowired
 	private DeliveryTaskRepository deliveryTaskRepository;
 
 	@Autowired

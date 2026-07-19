@@ -3,13 +3,16 @@ package com.example.fleet.service;
 import com.example.fleet.entity.DeliveryTask;
 import com.example.fleet.entity.WayPoint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class RoutingService {
 	@Autowired
 	private DistMatrixService distMatrixService;
+
 
 	public List<DeliveryTask> optimizeRoute(List<DeliveryTask> deliveryTasks) {
 		List<WayPoint> wayPoints = buildWaypointMatrix(deliveryTasks);
