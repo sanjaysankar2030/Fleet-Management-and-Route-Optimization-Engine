@@ -15,6 +15,9 @@ public class DistMatrixService {
 	@Autowired
 	private static final Logger log = LoggerFactory.getLogger(DistMatrixService.class);
 
+	@Autowired
+	private GraphHopperService graphHopperService;
+
 	/*
 	 * Formula for converting radian / vector to degree ( pi to -pi)
 	 * 𝑎=sin2Δlat2+cos(lat1)⋅cos(lat2)⋅sin2Δlong2
@@ -79,16 +82,18 @@ public class DistMatrixService {
 	}
 
 	public double[][] callDistanceApi(List<WayPoint> waypoints) throws Exception {
-
-		throw new Exception("API NOT IMPLEMENTED STILL FALLING BACK TO HAVERSINE");
-		//GraphHopper API CALL
+		try{
+			return graphHopperService.getDistanceMatrixFromGraphHopper(waypoints);
+		}catch (Exception e){
+			log.info("--------------------------------------------------------------");
+			log.info("The External Api is failing falling back to the haversine");
+			log.info("--------------------------------------------------------------");
+			throw new Exception("CALLING GRASSHOPPER API FAILED ");
+		}
 
 	}
 
 	public double[][] handleApiException(List<WayPoint> wayPoints) {
-		log.info("--------------------------------------------------------------");
-		log.info("External distance API failed. Falling back to Haversine. Reason");
-		log.info("--------------------------------------------------------------");
 		return buildHaversineMatrix(wayPoints);
 	}
 }
