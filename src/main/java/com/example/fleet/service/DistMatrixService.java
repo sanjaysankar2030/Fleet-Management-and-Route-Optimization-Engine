@@ -79,7 +79,10 @@ public class DistMatrixService {
 	}
 
 	public double[][] callDistanceApi(List<WayPoint> waypoints) throws Exception {
+
 		throw new Exception("API NOT IMPLEMENTED STILL FALLING BACK TO HAVERSINE");
+		//GraphHopper API CALL
+
 	}
 
 	public double[][] handleApiException(List<WayPoint> wayPoints) {
